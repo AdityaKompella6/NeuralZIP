@@ -1,5 +1,36 @@
 import torch.nn as nn
 import torch
+import math
+
+class PositionalEncoding2D(nn.Module):
+    def __init__(self, height, width, embed_dim):
+        super().__init__()
+        
+        self.height = height
+        self.width = width
+        self.embed_dim = embed_dim
+        
+        encodings = self.get_encodings(height, width, embed_dim)
+        self.register_buffer('encodings', encodings)
+        
+    def get_encodings(self, height, width, embed_dim):
+        encodings = torch.zeros(height, width, embed_dim)
+        
+        for h in range(height):
+            for w in range(width):
+                for i in range(0, embed_dim, 2):
+                    encodings[h,w,i] = math.sin(h / (10000 ** (i/embed_dim)))
+                    encodings[h,w,i+1] = math.cos(h / (10000 ** (i/embed_dim)))
+                    
+                for i in range(0, embed_dim, 2):
+                    encodings[h,w,i] = math.sin(w / (10000 ** (i/embed_dim)))  
+                    encodings[h,w,i+1] = math.cos(w / (10000 ** (i/embed_dim)))
+                    
+        return encodings
+        
+    def forward(self, patch_x, patch_y):
+        encodings = self.encodings[patch_x, patch_y]
+        return encodings
 
 class MLPBlock(nn.Module):
     def __init__(self,input_size,output_size,dropout = 0, norm = nn.LayerNorm, activation= nn.GELU):
@@ -34,11 +65,12 @@ class MLP(nn.Module):
     
 
 class PatchModel(nn.Module):
-    def __init__(self,num_patches = 16,embed_dim = 10, patch_dim = 49, hidden_dim = 100, num_layers = 3, width_patches = 4):
+    def __init__(self,num_patches_w = 4,num_patches_h = 4,embed_dim = 10, patch_dim = 49, hidden_dim = 100, num_layers = 3):
         super().__init__()
         self.layers = []
+        num_patches = num_patches_h*num_patches_w
         self.idx_embed = nn.Embedding(num_patches,embed_dim)
-        self.width_patches = width_patches
+        self.width_patches = num_patches_w
         self.mlp = MLP(embed_dim,patch_dim,hidden_dim,num_layers)
          
     def forward(self,patch_x,patch_y):    

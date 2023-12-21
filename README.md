@@ -8,3 +8,9 @@ have storage that is more efficient than 2352 floats.
 
 We will be tackling this problem by patching up the images and learning a representation 
 from patch indeces to the pixels of the patch.
+
+Usage:
+
+python zip.py --input_path (Path to Image File) --output_path (Where to save zipped file) --patch_size (what size patches you want to use to make the model generate, Default: 10) --num_epochs (How many epochs to train)
+
+python unzip.py --input_path (Path to zip file) --output_path (Where to save uncompressed Image File) 

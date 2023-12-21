@@ -1,4 +1,4 @@
-from torchvision.transforms import ToTensor
+from torchvision.transforms import ToTensor, Normalize
 from PIL import Image
 from dataset import PatchedImageDataset
 from torch.utils.data import DataLoader
@@ -31,8 +31,10 @@ def adjust_learning_rate(optimizer, epoch, lr, min_lr, num_epochs, warmup_epochs
 
 
 to_tensor = ToTensor()
+normalize = Normalize([0.485, 0.456, 0.406],[0.229, 0.224, 0.225])
 image = Image.open("./images/4.png").convert("RGB").resize((28,28))
 tensor_image = to_tensor(image)
+tensor_image = normalize(tensor_image)
 train_ds = PatchedImageDataset(tensor_image,7)
 
 model = PatchModel(num_layers=2,hidden_dim=8,patch_dim=49*3)
@@ -63,7 +65,8 @@ for epoch in range(epochs):
     epoch_losses.append(np.mean(losses))
 plt.plot(epoch_losses)
 plt.show()
-out_img = generate_image(model,7,28,28,4,4)
+out_img = generate_image(model,7,tensor_image.shape[1],tensor_image.shape[2])
+out_img = out_img*torch.tensor([0.229, 0.224, 0.225]).view(-1,1,1)  + torch.tensor([0.485, 0.456, 0.406]).view(-1,1,1)
 plt.imshow(out_img.permute(1,2,0))
 plt.show()
 
