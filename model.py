@@ -70,11 +70,14 @@ class PatchModel(nn.Module):
         self.layers = []
         num_patches = num_patches_h*num_patches_w
         self.idx_embed = nn.Embedding(num_patches,embed_dim)
+        self.pos_embed = PositionalEncoding2D(num_patches_h,num_patches_w,embed_dim)
         self.width_patches = num_patches_w
         self.mlp = MLP(embed_dim,patch_dim,hidden_dim,num_layers)
          
     def forward(self,patch_x,patch_y):    
         idx = patch_x*self.width_patches + patch_y
+        pos_embed = self.pos_embed(patch_x,patch_y)
         x_embed = self.idx_embed(idx)
+        x_embed += pos_embed
         out = self.mlp(x_embed)
         return out
